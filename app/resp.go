@@ -28,7 +28,7 @@ func readArray(n int, r *bufio.Reader) ([]string, error) {
 				return nil, err
 			}
 			out = append(out, string(data[:size]))
-		case ':': // integer (optional)
+		case ':': // integer
 			intLine, _ := r.ReadString('\n')
 			out = append(out, strings.TrimSuffix(intLine, "\r\n"))
 		default:
@@ -36,4 +36,14 @@ func readArray(n int, r *bufio.Reader) ([]string, error) {
 		}
 	}
 	return out, nil
+}
+
+func respArrays(arr []string) string {
+	var resp string = fmt.Sprintf("*%d\r\n", len(arr))
+
+	for _, str := range arr {
+		resp += fmt.Sprintf("$%d\r\n%s\r\n", len(str), str)
+	}
+
+	return resp
 }

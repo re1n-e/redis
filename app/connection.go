@@ -25,7 +25,7 @@ func handleCommands(firstLine string, r *bufio.Reader) (string, error) {
 			return "", err
 		}
 		return MatchCommand(arr)
-	case '+': // simple string already complete
+	case '+':
 		return firstLine + "\r\n", nil
 	default:
 		return "", fmt.Errorf("unexpected type byte %q", firstLine[0])
