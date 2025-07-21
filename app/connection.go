@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -51,4 +52,76 @@ func EventLoop(conn net.Conn) {
 		}
 		conn.Write([]byte(resp))
 	}
+}
+
+func handleReplicaOf(conn net.Conn, port string) {
+	_, err := conn.Write([]byte(respArrays([]string{"PING"})))
+	if err != nil {
+		fmt.Println("Failed to write ping to master.\nClosing connection...")
+		conn.Close()
+		os.Exit(1)
+	}
+	r := bufio.NewReader(conn)
+	line, err := r.ReadBytes('\n')
+	if err != nil {
+		if err != io.EOF {
+			fmt.Println("read:", err)
+		}
+		return
+	}
+	if strings.Compare(string(line), "+PONG\r\n") != 0 {
+		fmt.Println("Master didn't responsed with PONG")
+		conn.Close()
+		os.Exit(1)
+	}
+	_, err = conn.Write([]byte(respArrays([]string{"REPLCONF", "listening-port", port})))
+	if err != nil {
+		fmt.Println("Failed to write REPLCONF -port to master.\nClosing connection...")
+		conn.Close()
+		os.Exit(1)
+	}
+	line, err = r.ReadBytes('\n')
+	if err != nil {
+		if err != io.EOF {
+			fmt.Println("read:", err)
+		}
+		return
+	}
+	if strings.Compare(string(line), "+OK\r\n") != 0 {
+		fmt.Println("Master didn't responsed with +OK")
+		conn.Close()
+		os.Exit(1)
+	}
+	_, err = conn.Write([]byte(respArrays([]string{"REPLCONF", "capa", "psync2"})))
+	if err != nil {
+		fmt.Println("Failed to write REPLCONF -capa psync2 to master.\nClosing connection...")
+		conn.Close()
+		os.Exit(1)
+	}
+	line, err = r.ReadBytes('\n')
+	if err != nil {
+		if err != io.EOF {
+			fmt.Println("read:", err)
+		}
+		return
+	}
+	if strings.Compare(string(line), "+OK\r\n") != 0 {
+		fmt.Println("Master didn't responsed with +OK")
+		conn.Close()
+		os.Exit(1)
+	}
+	_, err = conn.Write([]byte(respArrays([]string{"PSYNC", "?", "-1"})))
+	if err != nil {
+		fmt.Println("Failed to write REPLCONF -psync to master.\nClosing connection...")
+		conn.Close()
+		os.Exit(1)
+	}
+	line, err = r.ReadBytes('\n')
+	if err != nil {
+		if err != io.EOF {
+			fmt.Println("read:", err)
+		}
+		return
+	}
+	EventLoop(conn)
 }

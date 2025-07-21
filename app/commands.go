@@ -50,6 +50,23 @@ func MatchCommand(arr []string) (string, error) {
 			return respArrays(Keys), nil
 		}
 		return "-Arguments too short\r\n", nil
+	case "info":
+		res := ""
+		switch repli.role {
+		case 0:
+			res = "master"
+		case 1:
+			res = "slave"
+		default:
+			res = ""
+		}
+		return respBulkString([]string{fmt.Sprintf("role:%s", res), "connected_slaves:0",
+			"master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+			"master_repl_offset:0"}), nil
+	case "replconf":
+		return "+OK\r\n", nil
+	case "psync":
+		return fmt.Sprintf("+FULLRESYNC %s 0\r\n", "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"), nil
 	default:
 		return "-ERR unknown command\r\n", nil
 	}
