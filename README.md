@@ -1,6 +1,6 @@
-[![progress-banner](https://backend.codecrafters.io/progress/redis/d83856f7-c69b-4454-916c-29590b305d62)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+[![progress-banner](https://backend.codecrafters.io/progress/redis/9ccecc4a-3472-41b0-b3bd-161b8a9a9eb0)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
-This is a starting point for Go solutions to the
+This is a starting point for Rust solutions to the
 ["Build Your Own Redis" Challenge](https://codecrafters.io/challenges/redis).
 
 In this challenge, you'll build a toy Redis clone that's capable of handling
@@ -12,7 +12,7 @@ event loops, the Redis protocol and more.
 
 # Passing the first stage
 
-The entry point for your Redis implementation is in `app/main.go`. Study and
+The entry point for your Redis implementation is in `src/main.rs`. Study and
 uncomment the relevant code, and push your changes to pass the first stage:
 
 ```sh
@@ -26,8 +26,9 @@ That's all!
 
 Note: This section is for stages 2 and beyond.
 
-1. Ensure you have `go (1.24)` installed locally
+1. Ensure you have `cargo (1.88)` installed locally
 1. Run `./your_program.sh` to run your Redis server, which is implemented in
-   `app/main.go`.
+   `src/main.rs`. This command compiles your Rust project, so it might be slow
+   the first time you run it. Subsequent runs will be fast.
 1. Commit your changes and run `git push origin master` to submit your solution
    to CodeCrafters. Test output will be streamed to your terminal.
