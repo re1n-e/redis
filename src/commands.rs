@@ -5,6 +5,12 @@ pub enum CommandType {
     Echo,
     Set,
     Get,
+    Rpush,
+    LPush,
+    Lrange,
+    LLen,
+    LPop,
+    BLpop,
     Unknown,
 }
 
@@ -15,6 +21,12 @@ impl From<&str> for CommandType {
             "ECHO" => CommandType::Echo,
             "SET" => CommandType::Set,
             "GET" => CommandType::Get,
+            "RPUSH" => CommandType::Rpush,
+            "LPUSH" => CommandType::LPush,
+            "LRANGE" => CommandType::Lrange,
+            "LLEN" => CommandType::LLen,
+            "LPOP" => CommandType::LPop,
+            "BLPOP" => CommandType::BLpop,
             _ => CommandType::Unknown,
         }
     }

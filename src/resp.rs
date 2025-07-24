@@ -9,7 +9,9 @@ use tokio::{
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Value {
     SimpleString(String),
+    NullBulkString,
     BulkString(String),
+    IntegerString(usize),
     Array(Vec<Value>),
 }
 
@@ -17,8 +19,16 @@ impl Value {
     pub fn serialize(self) -> String {
         match self {
             Value::SimpleString(s) => format!("+{}\r\n", s),
-            Value::BulkString(s) => format!("${}\r\n{}\r\n", s.chars().count(), s),
-            _ => panic!("Unsupported value for serialize"),
+            Value::BulkString(s) => format!("${}\r\n{}\r\n", s.len(), s),
+            Value::NullBulkString => "$-1\r\n".to_string(),
+            Value::IntegerString(n) => format!(":{}\r\n", n),
+            Value::Array(arr) => {
+                let mut res = format!("*{}\r\n", arr.len());
+                for val in arr {
+                    res.push_str(&val.serialize());
+                }
+                res
+            }
         }
     }
 }
@@ -28,6 +38,8 @@ impl fmt::Display for Value {
         match self {
             Value::SimpleString(s) => write!(f, "{}", s),
             Value::BulkString(s) => write!(f, "{}", s),
+            Value::IntegerString(_) => Ok(()),
+            Value::NullBulkString => Ok(()),
             Value::Array(_) => Ok(()),
         }
     }
