@@ -2,11 +2,11 @@ use crate::commands::{Command, CommandType};
 use crate::rdb::Rdb;
 use crate::resp::{RespHandler, Value};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 pub struct Redis {
     rdb: Rdb,
-    lists: HashMap<String, Vec<Value>>,
+    lists: HashMap<String, VecDeque<Value>>,
 }
 
 impl Redis {
@@ -49,9 +49,9 @@ impl Redis {
                     _ => panic!("Invalid key for RPUSH"),
                 };
 
-                let list = self.lists.entry(key).or_insert_with(Vec::new);
+                let list = self.lists.entry(key).or_insert_with(VecDeque::new);
                 for arg in &cmd.args[1..] {
-                    list.push(arg.clone());
+                    list.push_back(arg.clone());
                 }
                 Value::IntegerString(list.len())
             }
@@ -62,9 +62,9 @@ impl Redis {
                     _ => panic!("Invalid key for LPUSH"),
                 };
 
-                let list = self.lists.entry(key).or_insert_with(Vec::new);
+                let list = self.lists.entry(key).or_insert_with(VecDeque::new);
                 for arg in &cmd.args[1..] {
-                    list.insert(0, arg.clone()); // O(n) shift
+                    list.push_front(arg.clone());
                 }
                 Value::IntegerString(list.len())
             }
@@ -75,7 +75,7 @@ impl Redis {
                     _ => panic!("Invalid key for LRANGE"),
                 };
 
-                let result = self.lists.get(&key).map_or(vec![], |list| {
+                let result = self.lists.get_mut(&key).map_or(vec![], |list| {
                     let len = list.len() as isize;
 
                     let mut start = match cmd.args.get(1) {
@@ -101,7 +101,8 @@ impl Redis {
                     if start > end || start >= len {
                         vec![]
                     } else {
-                        list[start as usize..=end as usize].to_vec()
+                        let slice = list.make_contiguous();
+                        slice[start as usize..=end as usize].to_vec()
                     }
                 });
 
@@ -117,19 +118,19 @@ impl Redis {
                 let len = self.lists.get(&key).map_or(0, |list| list.len());
                 Value::IntegerString(len)
             }
+
             CommandType::LPop => {
                 let key = match &cmd.args[0] {
                     Value::BulkString(s) | Value::SimpleString(s) => s.clone(),
                     _ => panic!("Invalid key for LPOP"),
                 };
 
-                let list = self.lists.entry(key).or_insert_with(Vec::new);
+                let list = self.lists.entry(key).or_insert_with(VecDeque::new);
 
                 if list.is_empty() {
                     Value::NullBulkString
                 } else if cmd.args.len() == 1 {
-                    let value = list.remove(0);
-                    value
+                    list.pop_front().unwrap_or(Value::NullBulkString)
                 } else {
                     let count = match cmd.args.get(1) {
                         Some(Value::BulkString(s)) => s.parse::<usize>().unwrap_or(1),
@@ -140,13 +141,21 @@ impl Redis {
                     let mut result = Vec::with_capacity(actual_count);
 
                     for _ in 0..actual_count {
-                        result.push(list.remove(0));
+                        if let Some(val) = list.pop_front() {
+                            result.push(val);
+                        }
                     }
 
                     Value::Array(result)
                 }
             }
-            CommandType::BLpop => {}
+
+            CommandType::BLpop => {
+                // Leave this blank for now or handle async blocking logic separately.
+                
+                Value::SimpleString("ERR BLPOP not implemented".into())
+            }
+
             CommandType::Unknown => Value::SimpleString("ERR unknown command".into()),
         };
 

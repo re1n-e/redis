@@ -45,6 +45,7 @@ impl fmt::Display for Value {
     }
 }
 
+#[derive(Debug)]
 pub struct RespHandler {
     stream: TcpStream,
     buffer: BytesMut,
